@@ -21,5 +21,5 @@ jobs:
         if: hashFiles('Casks/t3code-alpha.rb') != ''
         run: |
           brew style Casks/t3code-alpha.rb
-          brew audit --cask --strict Casks/t3code-alpha.rb
-
+          brew tap theblankclub/tap "$GITHUB_WORKSPACE"
+          brew audit --cask --strict theblankclub/tap/t3code-alpha
