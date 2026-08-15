@@ -38,6 +38,7 @@ describe("T3 Code Alpha cask updater", () => {
     assert.match(cask, new RegExp(`intel: "${"b".repeat(64)}"`));
     assert.match(cask, /T3-Code-Alpha-#\{version\}-#\{arch\}\.dmg/);
     assert.match(cask, /brew upgrade --cask --no-quarantine t3code-alpha/);
+    assert.doesNotMatch(cask, /verified:/);
   });
 
   it("hashes downloaded release bytes", () => {

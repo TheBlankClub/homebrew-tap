@@ -48,8 +48,7 @@ cask "t3code-alpha" do
   sha256 arm:   "${arm64Sha256}",
          intel: "${x64Sha256}"
 
-  url "https://github.com/TheBlankClub/t3code-alpha/releases/download/v#{version}/T3-Code-Alpha-#{version}-#{arch}.dmg",
-      verified: "github.com/TheBlankClub/t3code-alpha/"
+  url "https://github.com/TheBlankClub/t3code-alpha/releases/download/v#{version}/T3-Code-Alpha-#{version}-#{arch}.dmg"
   name "T3 Code Alpha"
   desc "TheBlankClub's frequently updated T3 Code distribution"
   homepage "https://github.com/TheBlankClub/t3code-alpha"
