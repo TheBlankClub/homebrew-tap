@@ -26,7 +26,7 @@ describe("T3 Code Alpha cask updater", () => {
     assert.equal(selected.release.tag_name, "v0.0.34-alpha.20260815.8");
   });
 
-  it("renders architecture-specific checksums and the unsigned upgrade guidance", () => {
+  it("renders architecture-specific checksums and automatic ad-hoc signing", () => {
     const cask = renderCask({
       version: "0.0.34-alpha.20260815.8",
       arm64Sha256: "a".repeat(64),
@@ -37,8 +37,16 @@ describe("T3 Code Alpha cask updater", () => {
     assert.match(cask, new RegExp(`sha256 arm:   "${"a".repeat(64)}"`));
     assert.match(cask, new RegExp(`intel: "${"b".repeat(64)}"`));
     assert.match(cask, /T3-Code-Alpha-#\{version\}-#\{arch\}\.dmg/);
-    assert.match(cask, /brew upgrade --cask --no-quarantine t3code-alpha/);
+    assert.match(cask, /Dir\.glob\("#\{target\}\/Contents\/Frameworks\/\*\.\{app,framework\}"\)/);
+    assert.match(cask, /args: \["--force", "--sign", "-", nested\]/);
+    assert.match(cask, /args: \["--force", "--deep", "--sign", "-", target\]/);
+    assert.match(cask, /args: \["--verify", "--deep", "--strict", target\]/);
+    assert.match(cask, /args: \["-dr", "com\.apple\.quarantine", target\]/);
+    assert.match(cask, /brew upgrade --cask t3code-alpha/);
+    assert.doesNotMatch(cask, /--no-quarantine/);
     assert.doesNotMatch(cask, /verified:/);
+
+    assert.ok(cask.indexOf('args: ["--verify"') < cask.indexOf('args: ["-dr"'));
   });
 
   it("hashes downloaded release bytes", () => {
