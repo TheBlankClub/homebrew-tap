@@ -1,0 +1,25 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Audit casks
+    runs-on: macos-15
+    timeout-minutes: 10
+    steps:
+      - name: Checkout tap
+        uses: actions/checkout@v6
+
+      - name: Audit T3 Code Alpha
+        if: hashFiles('Casks/t3code-alpha.rb') != ''
+        run: |
+          brew style Casks/t3code-alpha.rb
+          brew audit --cask --strict Casks/t3code-alpha.rb
+
