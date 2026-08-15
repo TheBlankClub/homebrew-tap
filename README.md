@@ -4,7 +4,8 @@ Homebrew packages maintained by [TheBlankClub](https://github.com/TheBlankClub).
 
 ## T3 Code Alpha
 
-The cask is published automatically with the first T3 Code Alpha desktop release.
+The tap checks for a complete T3 Code Alpha prerelease every 30 minutes. It publishes the cask only
+after both macOS DMGs are available and their SHA-256 checksums have been calculated and audited.
 
 T3 Code Alpha is currently unsigned. Install it without macOS quarantine only if you trust the
 release artifacts published by `TheBlankClub/t3code-alpha`:
@@ -21,4 +22,3 @@ brew upgrade --cask --no-quarantine t3code-alpha
 ```
 
 The app's settings and projects remain in `~/.t3-alpha` across cask upgrades.
-
