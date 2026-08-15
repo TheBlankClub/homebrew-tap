@@ -33,6 +33,8 @@ jobs:
 
       - id: update
         name: Update cask from latest complete Alpha prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: node scripts/update-t3code-alpha-cask.mjs
 
       - name: Prepare updated cask commit

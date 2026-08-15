@@ -89,13 +89,18 @@ end
 `;
 }
 
-async function fetchJson(fetchImpl, url) {
+export function githubApiHeaders(token) {
+  return {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "TheBlankClub-homebrew-tap",
+    "X-GitHub-Api-Version": "2022-11-28",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+async function fetchJson(fetchImpl, url, token) {
   const response = await fetchImpl(url, {
-    headers: {
-      Accept: "application/vnd.github+json",
-      "User-Agent": "TheBlankClub-homebrew-tap",
-      "X-GitHub-Api-Version": "2022-11-28",
-    },
+    headers: githubApiHeaders(token),
   });
   if (!response.ok) throw new Error(`GitHub releases request failed with ${response.status}.`);
   return response.json();
@@ -131,8 +136,9 @@ async function writeOutput(entries) {
 export async function updateCask({
   fetchImpl = fetch,
   outputPath = resolve("Casks/t3code-alpha.rb"),
+  githubToken = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN,
 } = {}) {
-  const releases = await fetchJson(fetchImpl, RELEASES_URL);
+  const releases = await fetchJson(fetchImpl, RELEASES_URL, githubToken);
   const selected = selectLatestCompleteAlphaRelease(releases);
   if (!selected) throw new Error("No complete T3 Code Alpha prerelease with both DMGs was found.");
 

@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { renderCask, selectLatestCompleteAlphaRelease, sha256 } from "./update-t3code-alpha-cask.mjs";
+import {
+  githubApiHeaders,
+  renderCask,
+  selectLatestCompleteAlphaRelease,
+  sha256,
+} from "./update-t3code-alpha-cask.mjs";
 
 function release(version, publishedAt, arches = ["arm64", "x64"]) {
   return {
@@ -17,6 +22,11 @@ function release(version, publishedAt, arches = ["arm64", "x64"]) {
 }
 
 describe("T3 Code Alpha cask updater", () => {
+  it("authenticates GitHub API requests when the workflow provides a token", () => {
+    assert.equal(githubApiHeaders("test-token").Authorization, "Bearer test-token");
+    assert.ok(!("Authorization" in githubApiHeaders()));
+  });
+
   it("selects the newest prerelease only after both macOS artifacts exist", () => {
     const complete = release("0.0.34-alpha.20260815.8", "2026-08-15T08:00:00Z");
     const incomplete = release("0.0.34-alpha.20260815.9", "2026-08-15T09:00:00Z", ["arm64"]);
