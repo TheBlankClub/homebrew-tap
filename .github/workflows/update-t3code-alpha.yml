@@ -34,15 +34,7 @@ jobs:
         name: Update cask from latest complete Alpha prerelease
         run: node scripts/update-t3code-alpha-cask.mjs
 
-      - name: Audit updated cask
-        if: steps.update.outputs.changed == 'true'
-        run: |
-          ruby -c Casks/t3code-alpha.rb
-          brew style Casks/t3code-alpha.rb
-          brew tap theblankclub/tap "$GITHUB_WORKSPACE"
-          brew audit --cask --strict theblankclub/tap/t3code-alpha
-
-      - name: Commit updated cask
+      - name: Prepare updated cask commit
         if: steps.update.outputs.changed == 'true'
         env:
           ALPHA_VERSION: ${{ steps.update.outputs.version }}
@@ -51,4 +43,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add Casks/t3code-alpha.rb
           git commit -m "chore: update t3code-alpha to $ALPHA_VERSION"
+
+      - name: Audit updated cask
+        if: steps.update.outputs.changed == 'true'
+        run: |
+          ruby -c Casks/t3code-alpha.rb
+          brew style Casks/t3code-alpha.rb
+          brew tap theblankclub/tap "$GITHUB_WORKSPACE"
+          brew audit --cask --strict theblankclub/tap/t3code-alpha
+
+      - name: Publish updated cask
+        if: steps.update.outputs.changed == 'true'
+        run: |
           git push origin HEAD:main
