@@ -4,9 +4,9 @@
 cask "t3code-alpha" do
   arch arm: "arm64", intel: "x64"
 
-  version "0.0.34-alpha.20260820.40"
-  sha256 arm:   "e5953f990f07f61d3c55948c9dc96e6b09f672910effccc6da999f4859e5a235",
-         intel: "0b6cbebcd7e03d9bb046ce28bfc58d17d80f34c95f67c5528d7f771613ea2576"
+  version "0.0.34-alpha.20260821.42"
+  sha256 arm:   "0c2bba8390e2658e0e524afc0691ebc777f8174086f8af7854304fe261224773",
+         intel: "ead6329490e44860d3aaf78f9b0b17123c121221e6055662ecbd56e6478408e6"
 
   url "https://github.com/TheBlankClub/t3code-alpha/releases/download/v#{version}/T3-Code-Alpha-#{version}-#{arch}.dmg"
   name "T3 Code Alpha"
