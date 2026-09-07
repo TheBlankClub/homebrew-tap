@@ -15,24 +15,29 @@ cask "t3code-alpha" do
 
   app "T3 Code Alpha.app"
 
-  postflight do
-    target = "#{appdir}/T3 Code Alpha.app"
-
-    Dir.glob("#{target}/Contents/Frameworks/*.{app,framework}").each do |nested|
-      system_command "/usr/bin/codesign",
-                     args: ["--force", "--sign", "-", nested],
-                     sudo: false
-    end
-
-    system_command "/usr/bin/codesign",
-                   args: ["--force", "--deep", "--sign", "-", target],
-                   sudo: false
-    system_command "/usr/bin/codesign",
-                   args: ["--verify", "--deep", "--strict", target],
-                   sudo: false
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", target],
-                   sudo: false
+  postflight_steps do
+    # codesign requires nested bundles to be signed before the outer bundle, and
+    # run steps cannot glob, so the inner-first pass runs in one shell step.
+    run "/bin/sh",
+        args:           ["-c", <<~SH, "sh", "{{appdir}}/T3 Code Alpha.app"],
+          set -e
+          for nested in "$1"/Contents/Frameworks/*.app "$1"/Contents/Frameworks/*.framework; do
+            [ -e "$nested" ] || continue
+            /usr/bin/codesign --force --sign - "$nested"
+          done
+        SH
+        writable_paths: ["T3 Code Alpha.app"],
+        writable_base:  :appdir
+    run "/usr/bin/codesign",
+        args:           ["--force", "--deep", "--sign", "-", "{{appdir}}/T3 Code Alpha.app"],
+        writable_paths: ["T3 Code Alpha.app"],
+        writable_base:  :appdir
+    run "/usr/bin/codesign",
+        args: ["--verify", "--deep", "--strict", "{{appdir}}/T3 Code Alpha.app"]
+    run "/usr/bin/xattr",
+        args:           ["-dr", "com.apple.quarantine", "{{appdir}}/T3 Code Alpha.app"],
+        writable_paths: ["T3 Code Alpha.app"],
+        writable_base:  :appdir
   end
 
   caveats <<~EOS

@@ -86,16 +86,18 @@ describe("T3 Code Alpha cask updater", () => {
     assert.match(cask, /T3-Code-Alpha-#\{version\}-arm64\.dmg/);
     assert.match(cask, /depends_on arch: :arm64/);
     assert.doesNotMatch(cask, /intel/);
-    assert.match(cask, /Dir\.glob\("#\{target\}\/Contents\/Frameworks\/\*\.\{app,framework\}"\)/);
-    assert.match(cask, /args: \["--force", "--sign", "-", nested\]/);
-    assert.match(cask, /args: \["--force", "--deep", "--sign", "-", target\]/);
-    assert.match(cask, /args: \["--verify", "--deep", "--strict", target\]/);
-    assert.match(cask, /args: \["-dr", "com\.apple\.quarantine", target\]/);
+    assert.match(cask, /postflight_steps do/);
+    assert.doesNotMatch(cask, /^  postflight do$/m);
+    assert.match(cask, /Contents\/Frameworks\/\*\.app/);
+    assert.match(cask, /codesign --force --sign - "\$nested"/);
+    assert.match(cask, /args:\s+\["--force", "--deep", "--sign", "-", "\{\{appdir\}\}\/T3 Code Alpha\.app"\]/);
+    assert.match(cask, /args:\s+\["--verify", "--deep", "--strict", "\{\{appdir\}\}\/T3 Code Alpha\.app"\]/);
+    assert.match(cask, /args:\s+\["-dr", "com\.apple\.quarantine", "\{\{appdir\}\}\/T3 Code Alpha\.app"\]/);
     assert.match(cask, /brew upgrade --cask t3code-alpha/);
     assert.doesNotMatch(cask, /--no-quarantine/);
     assert.doesNotMatch(cask, /verified:/);
 
-    assert.ok(cask.indexOf('args: ["--verify"') < cask.indexOf('args: ["-dr"'));
+    assert.ok(cask.indexOf('"--verify"') < cask.indexOf('"-dr"'));
   });
 
   it("hashes downloaded release bytes", () => {
