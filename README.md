@@ -4,8 +4,8 @@ Homebrew packages maintained by [TheBlankClub](https://github.com/TheBlankClub).
 
 ## T3 Code Alpha
 
-The tap checks for a complete T3 Code Alpha prerelease every 30 minutes. It publishes the cask only
-after both macOS DMGs are available and their SHA-256 checksums have been calculated and audited.
+The tap checks for a T3 Code Alpha prerelease with an arm64 macOS DMG every 30 minutes. It publishes
+the arm64-only cask after that artifact's SHA-256 checksum has been calculated and audited.
 
 T3 Code Alpha is not signed with an Apple Developer ID. During every install or upgrade, the cask
 applies an ad-hoc signature to the Electron app, verifies the resulting bundle, and then removes its

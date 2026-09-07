@@ -22,10 +22,9 @@ export function selectLatestCompleteAlphaRelease(releases) {
 
       const version = match[1];
       const arm64 = release.assets.find((asset) => asset.name === assetName(version, "arm64"));
-      const x64 = release.assets.find((asset) => asset.name === assetName(version, "x64"));
-      if (!arm64 || !x64) return [];
+      if (!arm64) return [];
 
-      return [{ release, version, arm64, x64 }];
+      return [{ release, version, arm64 }];
     })
     .sort(
       (left, right) =>
@@ -37,22 +36,20 @@ export function sha256(contents) {
   return createHash("sha256").update(contents).digest("hex");
 }
 
-export function renderCask({ version, arm64Sha256, x64Sha256 }) {
+export function renderCask({ version, arm64Sha256 }) {
   return `# typed: strict
 # frozen_string_literal: true
 
 cask "t3code-alpha" do
-  arch arm: "arm64", intel: "x64"
-
   version "${version}"
-  sha256 arm:   "${arm64Sha256}",
-         intel: "${x64Sha256}"
+  sha256 "${arm64Sha256}"
 
-  url "https://github.com/TheBlankClub/t3code-alpha/releases/download/v#{version}/T3-Code-Alpha-#{version}-#{arch}.dmg"
+  url "https://github.com/TheBlankClub/t3code-alpha/releases/download/v#{version}/T3-Code-Alpha-#{version}-arm64.dmg"
   name "T3 Code Alpha"
   desc "TheBlankClub's frequently updated T3 Code distribution"
   homepage "https://github.com/TheBlankClub/t3code-alpha"
 
+  depends_on arch: :arm64
   depends_on :macos
 
   app "T3 Code Alpha.app"
@@ -140,16 +137,12 @@ export async function updateCask({
 } = {}) {
   const releases = await fetchJson(fetchImpl, RELEASES_URL, githubToken);
   const selected = selectLatestCompleteAlphaRelease(releases);
-  if (!selected) throw new Error("No complete T3 Code Alpha prerelease with both DMGs was found.");
+  if (!selected) throw new Error("No T3 Code Alpha prerelease with an arm64 DMG was found.");
 
-  const [arm64Contents, x64Contents] = await Promise.all([
-    fetchAsset(fetchImpl, selected.arm64.browser_download_url),
-    fetchAsset(fetchImpl, selected.x64.browser_download_url),
-  ]);
+  const arm64Contents = await fetchAsset(fetchImpl, selected.arm64.browser_download_url);
   const cask = renderCask({
     version: selected.version,
     arm64Sha256: sha256(arm64Contents),
-    x64Sha256: sha256(x64Contents),
   });
   const changed = (await readExisting(outputPath)) !== cask;
 

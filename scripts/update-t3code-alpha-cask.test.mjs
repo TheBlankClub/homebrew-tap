@@ -1,4 +1,7 @@
 import assert from "node:assert/strict";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { describe, it } from "node:test";
 
 import {
@@ -6,6 +9,7 @@ import {
   renderCask,
   selectLatestCompleteAlphaRelease,
   sha256,
+  updateCask,
 } from "./update-t3code-alpha-cask.mjs";
 
 function release(version, publishedAt, arches = ["arm64", "x64"]) {
@@ -27,26 +31,61 @@ describe("T3 Code Alpha cask updater", () => {
     assert.ok(!("Authorization" in githubApiHeaders()));
   });
 
-  it("selects the newest prerelease only after both macOS artifacts exist", () => {
-    const complete = release("0.0.34-alpha.20260815.8", "2026-08-15T08:00:00Z");
-    const incomplete = release("0.0.34-alpha.20260815.9", "2026-08-15T09:00:00Z", ["arm64"]);
-    const selected = selectLatestCompleteAlphaRelease([complete, incomplete]);
+  it("selects the newest prerelease with an arm64 DMG over an older dual-DMG release", () => {
+    const olderDualDmg = release("0.0.34-alpha.20260815.8", "2026-08-15T08:00:00Z");
+    const newestArm64Only = release("0.0.34-alpha.20260815.9", "2026-08-15T09:00:00Z", ["arm64"]);
+    const selected = selectLatestCompleteAlphaRelease([olderDualDmg, newestArm64Only]);
 
-    assert.equal(selected.version, "0.0.34-alpha.20260815.8");
-    assert.equal(selected.release.tag_name, "v0.0.34-alpha.20260815.8");
+    assert.equal(selected.version, "0.0.34-alpha.20260815.9");
+    assert.equal(selected.release.tag_name, "v0.0.34-alpha.20260815.9");
   });
 
-  it("renders architecture-specific checksums and automatic ad-hoc signing", () => {
+  it("rejects prereleases without an arm64 DMG", () => {
+    const x64Only = release("0.0.34-alpha.20260815.9", "2026-08-15T09:00:00Z", ["x64"]);
+
+    assert.equal(selectLatestCompleteAlphaRelease([x64Only]), undefined);
+  });
+
+  it("updates the same version when its cask schema changes", async () => {
+    const version = "0.0.34-alpha.20260815.9";
+    const selectedRelease = release(version, "2026-08-15T09:00:00Z", ["arm64"]);
+    const assetContents = new TextEncoder().encode("arm64-alpha");
+    const directory = await mkdtemp(join(tmpdir(), "t3code-alpha-cask-"));
+    const outputPath = join(directory, "t3code-alpha.rb");
+    const fetchImpl = async (url) => {
+      if (url.includes("/releases?")) return new Response(JSON.stringify([selectedRelease]));
+      if (url === selectedRelease.assets[0].browser_download_url) return new Response(assetContents);
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+
+    try {
+      await writeFile(outputPath, `cask "t3code-alpha" do\n  version "${version}"\nend\n`);
+
+      const first = await updateCask({ fetchImpl, outputPath, githubToken: "test-token" });
+      assert.equal(first.changed, true);
+      assert.equal(first.version, version);
+      assert.equal(
+        await readFile(outputPath, "utf8"),
+        renderCask({ version, arm64Sha256: sha256(assetContents) }),
+      );
+
+      const second = await updateCask({ fetchImpl, outputPath, githubToken: "test-token" });
+      assert.equal(second.changed, false);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("renders an arm64-only cask with automatic ad-hoc signing", () => {
     const cask = renderCask({
       version: "0.0.34-alpha.20260815.8",
       arm64Sha256: "a".repeat(64),
-      x64Sha256: "b".repeat(64),
     });
 
-    assert.match(cask, /arch arm: "arm64", intel: "x64"/);
-    assert.match(cask, new RegExp(`sha256 arm:   "${"a".repeat(64)}"`));
-    assert.match(cask, new RegExp(`intel: "${"b".repeat(64)}"`));
-    assert.match(cask, /T3-Code-Alpha-#\{version\}-#\{arch\}\.dmg/);
+    assert.match(cask, new RegExp(`sha256 "${"a".repeat(64)}"`));
+    assert.match(cask, /T3-Code-Alpha-#\{version\}-arm64\.dmg/);
+    assert.match(cask, /depends_on arch: :arm64/);
+    assert.doesNotMatch(cask, /intel/);
     assert.match(cask, /Dir\.glob\("#\{target\}\/Contents\/Frameworks\/\*\.\{app,framework\}"\)/);
     assert.match(cask, /args: \["--force", "--sign", "-", nested\]/);
     assert.match(cask, /args: \["--force", "--deep", "--sign", "-", target\]/);
