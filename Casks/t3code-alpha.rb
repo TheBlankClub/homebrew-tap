@@ -2,8 +2,8 @@
 # frozen_string_literal: true
 
 cask "t3code-alpha" do
-  version "0.0.41-alpha.20260912.105"
-  sha256 "bc979e7f4348206516c9866cc15bc6d290cbe79e23fa0597f38efe5e81665ccb"
+  version "0.0.41-alpha.20260913.108"
+  sha256 "5ce52294aa8fbb72e36348720ea620c66bf22c0b2e6d740cd46f54a9cf1c219b"
 
   url "https://github.com/TheBlankClub/t3code-alpha/releases/download/v#{version}/T3-Code-Alpha-#{version}-arm64.dmg"
   name "T3 Code Alpha"
